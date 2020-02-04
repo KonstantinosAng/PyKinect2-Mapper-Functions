@@ -120,7 +120,7 @@ def color_point_2_depth_point(kinect, depth_space_point, depth_frame_data, color
     # Where color_point = [xcolor, ycolor]
     depth_x = color2depth_points[color_point[1] * 1920 + color_point[0] - 1].x
     depth_y = color2depth_points[color_point[1] * 1920 + color_point[0] - 1].y
-    return int(depth_x), int(depth_y)
+    return [depth_x, depth_y]
 
 
 # Return depth of object given the depth map coordinates
@@ -448,6 +448,7 @@ if __name__ == '__main__':
             depth_img = depth_frame.reshape((kinect.depth_frame_desc.Height, kinect.depth_frame_desc.Width)).astype(np.uint8)
             depth_img = cv2.flip(depth_img, 1)
             cv2.imshow('Test Depth View', depth_img)
+            print(color_point_2_depth_point(kinect, _DepthSpacePoint, kinect._depth_frame_data, [100, 100]))
             print(depth_points_2_world_points(kinect, _DepthSpacePoint, [[100, 150], [200, 250]]))
 
         # Quit using q
