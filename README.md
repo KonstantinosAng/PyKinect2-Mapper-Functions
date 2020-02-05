@@ -1,4 +1,4 @@
-# PyKinectV2 Mapper Functions
+# PyKinect2 Mapper Functions
 ***
 
 ## Description
