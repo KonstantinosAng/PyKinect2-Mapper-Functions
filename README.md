@@ -2,7 +2,7 @@
 ***
 
 ## Description
-Documentation and description on how to use the ICoordinateMapper of Microsoft Kinect V2 using PyKinectV2 and python.
+Documentation and description on how to use the ICoordinateMapper of Microsoft Kinect V2 using [PyKinectV2](https://github.com/Kinect/PyKinect2) and [python](https://www.python.org).
 
 ## Instructions
 
