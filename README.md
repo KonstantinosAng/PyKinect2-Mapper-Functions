@@ -13,6 +13,10 @@ and have at least one depth frame and color frame to use most of the functions w
 and if you like it give it a star.
 
 ## Requirements
+Install all requirements from requirements.txt using the following command
+```
+pip install -r requirements.txt --no-index --find-links file:///tmp/packages
+```
 Full list of **all** requirements
 ```
 * ctypes
