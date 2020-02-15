@@ -410,7 +410,7 @@ def depth_2_world_table(kinect, depth_space_point, as_array=False):
 
 # Retrieve the depth camera intrinsics from the kinect's mapper
 # and write them at: calibrate/IR/intrinsics_retrieved_from_kinect_mapper.json
-def intrinsics(kinect, path='calibrate/IR/intrinsics_retrieved_from_kinect_mapper.json', write=False):
+def intrinsics(kinect, path='intrinsics_retrieved_from_kinect_mapper.json', write=False):
     """
     :param kinect: kinect instance
     :param path: path to save the intrinsics as a json file
