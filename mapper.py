@@ -55,7 +55,7 @@ def depth_2_color_space(kinect, depth_space_point, depth_frame_data, show=False)
     if show:
         import cv2
         depth_frame = kinect.get_last_depth_frame()
-        depth_img = depth_frame.reshape((kinect.depth_frame_desc.Height, kinect.depth_frame_desc.Width, 4)).astype(np.uint8)
+        depth_img = depth_frame.reshape((kinect.depth_frame_desc.Height, kinect.depth_frame_desc.Width)).astype(np.uint8)
         align_depth_img = np.zeros((1080, 1920, 4), dtype=np.uint8)
         align_depth_img[:, :] = depth_img[depthYs, depthXs, :]
         cv2.imshow('img', align_depth_img)
