@@ -10,7 +10,8 @@ Simply import the mapper.py in your file and use the functions. The reason I hav
 kinect instance as the first argument is to avoid any segmentation errors by multiple access points to 
 the the kinect device. Most of the function work pretty well, just remember to give time to kinect to open 
 and have at least one depth frame and color frame to use most of the functions without errors. Feel free to modify and use
-and if you like it give it a star.
+and if you like it give it a star. Most of the documentation is inside the mapper.py file, if you cannot understand how to use
+any of the function feel free to open an issue and ask me.
 
 ## Requirements
 Install all requirements from requirements.txt using the following command
