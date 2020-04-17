@@ -58,7 +58,7 @@ def depth_2_color_space(kinect, depth_space_point, depth_frame_data, show=False)
         depth_img = depth_frame.reshape((kinect.depth_frame_desc.Height, kinect.depth_frame_desc.Width, 1)).astype(np.uint8)
         align_depth_img = np.zeros((1080, 1920, 4), dtype=np.uint8)
         align_depth_img[:, :] = depth_img[depthYs, depthXs, :]
-        cv2.imshow('Aligned Image', align_depth_img)
+        cv2.imshow('Aligned Image', cv2.resize(cv2.flip(align_depth_img, 1), (int(1920 / 2.0), int(1080 / 2.0))))
         cv2.waitKey(0)
 
     return depthXs, depthYs
@@ -94,7 +94,7 @@ def color_2_depth_space(kinect, color_space_point, depth_frame_data, show=False)
         color_img = color_frame.reshape((kinect.color_frame_desc.Height, kinect.color_frame_desc.Width, 4)).astype(np.uint8)
         align_color_img = np.zeros((424, 512, 4), dtype=np.uint8)
         align_color_img[:, :] = color_img[colorYs, colorXs, :]
-        cv2.imshow('img', align_color_img)
+        cv2.imshow('img', cv2.flip(align_color_img, 1))
         cv2.waitKey(3000)
     return colorXs, colorYs
 
@@ -120,7 +120,7 @@ def color_point_2_depth_point(kinect, depth_space_point, depth_frame_data, color
     # Where color_point = [xcolor, ycolor]
     depth_x = color2depth_points[color_point[1] * 1920 + color_point[0] - 1].x
     depth_y = color2depth_points[color_point[1] * 1920 + color_point[0] - 1].y
-    return [depth_x, depth_y]
+    return [int(depth_x), int(depth_y)]
 
 
 # Return depth of object given the depth map coordinates
@@ -179,8 +179,7 @@ def transform_color_2_depth(color_points, depth_points):
             configs = {"Description": description, "Transformation Matrix": matrix.tolist()}
             json.dump(configs, json_file, separators=(',', ':'), sort_keys=True, indent=4)
     except Exception as e:
-        print("Could not solve linear equations")
-        print(e)
+        print(f"[MAPPER]: Could not solve linear equations \n{e}")
         ret = False
 
     return matrix, ret
@@ -201,11 +200,10 @@ def xy2uv_with_res(x, y, color_width, color_height, depth_width, depth_height):
 # Map Depth Frame to World Space
 def depth_2_world(kinect, depth_frame_data, camera_space_point, as_array=False):
     """
-
     :param kinect: kinect class
      :param depth_frame_data: kinect._depth_frame_data
     :param camera_space_point: _CameraSpacePoint
-    :param as_array: returns the data as a numpu array
+    :param as_array: returns the data as a numpy array
     :return: returns the DepthFrame mapped to camera space
     """
     import numpy as np
@@ -214,9 +212,9 @@ def depth_2_world(kinect, depth_frame_data, camera_space_point, as_array=False):
     depth2world_points = ctypes.cast(depth2world_points_type(), ctypes.POINTER(camera_space_point))
     kinect._mapper.MapDepthFrameToCameraSpace(ctypes.c_uint(512 * 424), depth_frame_data, ctypes.c_uint(512 * 424), depth2world_points)
     points = ctypes.cast(depth2world_points, ctypes.POINTER(ctypes.c_float))
-    data = np.ctypeslib.as_array(depth2world_points, shape=(424, 512))
+    data = np.ctypeslib.as_array(depth2world_points, shape=(424, 512, 3))
     if not as_array:
-        return points
+        return depth2world_points
     else:
         return data
 
@@ -248,7 +246,7 @@ def world_point_2_color(kinect, camera_space_point, point):
     """
     :arg: kinect class from main file
     :arg: _CameraSpacePoint structure from PyKinectV2
-    :arg: world point [x, y, z]
+    :arg: world point [x, y, z] in meters
     :return: colorPoint = [u, v] pixel coordinates
     """
     import ctypes
@@ -267,7 +265,7 @@ def world_point_2_depth(kinect, camera_space_point, point):
     """
     :arg: kinect class from main file
     :arg: _CameraSpacePoint structure from PyKinectV2
-    :arg: world point [x, y, z]
+    :arg: world point [x, y, z] in meters
     :return: depthPoint = [u, v] pixel coordinates
     """
     import ctypes
@@ -286,7 +284,7 @@ def world_points_2_color(kinect, camera_space_point, points):
     """
     :arg: kinect class from main file
     :arg: _CameraSpacePoint structure from PyKinectV2
-    :arg: world points [[x, y, z], [x, y, z], ..... , [x, y, z]]
+    :arg: world points [[x, y, z], [x, y, z], ..... , [x, y, z]] in meters
     :return: colorPoints = [[u, v], [u, v], ...., [u, v]] pixel coordinates
     """
     import ctypes
@@ -308,7 +306,7 @@ def world_points_2_depth(kinect, camera_space_point, points):
     """
     :arg: kinect class from main file
     :arg: _CameraSpacePoint structure from PyKinectV2
-    :arg: world points [[x, y, z], [x, y, z], ..... , [x, y, z]]
+    :arg: world points [[x, y, z], [x, y, z], ..... , [x, y, z]] in meters
     :return: colorPoints = [[u, v], [u, v], ...., [u, v]] pixel coordinates
     """
     import ctypes
@@ -347,6 +345,34 @@ def depth_points_2_world_points(kinect, depth_space_point, depth_points):
     return camera_points  # meters
 
 
+# Map depth points to world points faster than above method
+def depth_points_2_camera_points(kinect, depth_space_point, camera_space_point, xys, as_array=False):
+    """
+    :param kinect: kinect class
+    :param depth_space_point: _DepthSpacePoint
+    :param camera_space_point: _CameraSpacePoint
+    :return camera space points as camera_points[y*512 + x].x/y/z
+    """
+    import ctypes
+    import numpy as np
+    length_of_points = len(xys)
+    depth_points_type = depth_space_point * np.int(length_of_points)
+    depth_points = ctypes.cast(depth_points_type(), ctypes.POINTER(depth_space_point))
+    camera_points_type = camera_space_point * np.int(length_of_points)
+    camera_points = ctypes.cast(camera_points_type(), ctypes.POINTER(camera_space_point))
+    depths = ctypes.POINTER(ctypes.c_ushort) * np.int(length_of_points)
+    depths = ctypes.cast(depths(), ctypes.POINTER(ctypes.c_ushort))
+    for i, point in enumerate(xys):
+        depth_points[i].x = point[0]
+        depth_points[i].y = point[1]
+    kinect._mapper.MapDepthPointsToCameraSpace(ctypes.c_uint(length_of_points), depth_points, ctypes.c_uint(length_of_points), depths, ctypes.c_uint(length_of_points), camera_points)
+    if as_array:
+        camera_points = ctypes.cast(camera_points, ctypes.POINTER(ctypes.c_float))
+        camera_points = np.ctypeslib.as_array(camera_points, shape=(length_of_points, 3))
+        return camera_points
+    return camera_points
+
+
 # Map a depth point to world point
 def depth_point_2_world_point(kinect, depth_space_point, depthPoint):
     """
@@ -367,6 +393,7 @@ def depth_point_2_world_point(kinect, depth_space_point, depthPoint):
     return [world_point.x, world_point.y, world_point.z]  # meters
 
 
+# Map depth point to color point
 def depth_point_2_color(kinect, depth_space_point, depthPoint):
     """
     :param kinect: kinect class
@@ -404,13 +431,13 @@ def depth_2_world_table(kinect, depth_space_point, as_array=False):
         """ Returns an array as table[0, 0][0] = x and table[0, 0][1] = y for the first pixel in depth frame
         """
         table = ctypes.cast(table, ctypes.POINTER(ctypes.c_float))
-        table = np.ctypeslib.as_array(table, shape=(kinect.depth_frame_desc.Height, kinect.depth_frame_desc.Width, 2))
+        table = np.ctypeslib.as_array(table, shape=(kinect.depth_frame_desc.Height * kinect.depth_frame_desc.Width, 2))
     return table
 
 
 # Retrieve the depth camera intrinsics from the kinect's mapper
 # and write them at: calibrate/IR/intrinsics_retrieved_from_kinect_mapper.json
-def intrinsics(kinect, path='intrinsics_retrieved_from_kinect_mapper.json', write=False):
+def intrinsics(kinect, path='calibrate/IR/intrinsics_retrieved_from_kinect_mapper.json', write=False):
     """
     :param kinect: kinect instance
     :param path: path to save the intrinsics as a json file
@@ -430,6 +457,9 @@ def intrinsics(kinect, path='intrinsics_retrieved_from_kinect_mapper.json', writ
 
 
 if __name__ == '__main__':
+    """
+        Example of some usages
+    """
     from pykinect2 import PyKinectV2
     from pykinect2.PyKinectV2 import *
     from pykinect2 import PyKinectRuntime
@@ -448,9 +478,12 @@ if __name__ == '__main__':
             depth_img = depth_frame.reshape((kinect.depth_frame_desc.Height, kinect.depth_frame_desc.Width)).astype(np.uint8)
             depth_img = cv2.flip(depth_img, 1)
             cv2.imshow('Test Depth View', depth_img)
-            print(color_point_2_depth_point(kinect, _DepthSpacePoint, kinect._depth_frame_data, [100, 100]))
-            print(depth_points_2_world_points(kinect, _DepthSpacePoint, [[100, 150], [200, 250]]))
-
+            # print(color_point_2_depth_point(kinect, _DepthSpacePoint, kinect._depth_frame_data, [100, 100]))
+            # print(depth_points_2_world_points(kinect, _DepthSpacePoint, [[100, 150], [200, 250]]))
+            # print(intrinsics(kinect).FocalLengthX, intrinsics(kinect).FocalLengthY, intrinsics(kinect).PrincipalPointX, intrinsics(kinect).PrincipalPointY)
+            # print(intrinsics(kinect).RadialDistortionFourthOrder, intrinsics(kinect).RadialDistortionSecondOrder, intrinsics(kinect).RadialDistortionSixthOrder)
+            # print(world_point_2_depth(kinect, _CameraSpacePoint, [0.250, 0.325, 1]))
+            depth_2_color_space(kinect, _DepthSpacePoint, kinect._depth_frame_data, show=True)
         # Quit using q
         if cv2.waitKey(1) & 0xff == ord('q'):
             break
