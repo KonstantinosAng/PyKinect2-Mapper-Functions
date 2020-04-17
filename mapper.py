@@ -428,7 +428,7 @@ def depth_2_world_table(kinect, depth_space_point, as_array=False):
     """ Use table[0].x and table[0].y for the first pixel in kinect.get_last_depth_frame array
     """
     if as_array:
-        """ Returns an array as table[0, 0][0] = x and table[0, 0][1] = y for the first pixel in depth frame
+        """ Returns an array as table[0, 0] = x and table[0, 1] = y for the first pixel in depth frame
         """
         table = ctypes.cast(table, ctypes.POINTER(ctypes.c_float))
         table = np.ctypeslib.as_array(table, shape=(kinect.depth_frame_desc.Height * kinect.depth_frame_desc.Width, 2))
