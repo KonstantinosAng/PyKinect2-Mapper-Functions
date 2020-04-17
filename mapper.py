@@ -212,7 +212,7 @@ def depth_2_world(kinect, depth_frame_data, camera_space_point, as_array=False):
     depth2world_points = ctypes.cast(depth2world_points_type(), ctypes.POINTER(camera_space_point))
     kinect._mapper.MapDepthFrameToCameraSpace(ctypes.c_uint(512 * 424), depth_frame_data, ctypes.c_uint(512 * 424), depth2world_points)
     points = ctypes.cast(depth2world_points, ctypes.POINTER(ctypes.c_float))
-    data = np.ctypeslib.as_array(depth2world_points, shape=(424, 512, 3))
+    data = np.ctypeslib.as_array(points, shape=(424, 512, 3))
     if not as_array:
         return depth2world_points
     else:
@@ -230,13 +230,13 @@ def color_2_world(kinect, depth_frame_data, camera_space_point, as_array=False):
     """
     import numpy as np
     import ctypes
-    depth2world_points_type = camera_space_point * np.int(1920 * 1080)
-    depth2world_points = ctypes.cast(depth2world_points_type(), ctypes.POINTER(camera_space_point))
-    kinect._mapper.MapColorFrameToCameraSpace(ctypes.c_uint(512 * 424), depth_frame_data, ctypes.c_uint(1920 * 1080), depth2world_points)
-    pf_csps = ctypes.cast(depth2world_points, ctypes.POINTER(ctypes.c_float))
-    data = np.ctypeslib.as_array(depth2world_points, shape=(1080, 1920, 3))
+    color2world_points_type = camera_space_point * np.int(1920 * 1080)
+    color2world_points = ctypes.cast(color2world_points_type(), ctypes.POINTER(camera_space_point))
+    kinect._mapper.MapColorFrameToCameraSpace(ctypes.c_uint(512 * 424), depth_frame_data, ctypes.c_uint(1920 * 1080), color2world_points)
+    pf_csps = ctypes.cast(color2world_points, ctypes.POINTER(ctypes.c_float))
+    data = np.ctypeslib.as_array(pf_csps, shape=(1080, 1920, 3))
     if not as_array:
-        return pf_csps
+        return color2world_points
     else:
         return data
 
