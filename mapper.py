@@ -59,7 +59,7 @@ def depth_2_color_space(kinect, depth_space_point, depth_frame_data, show=False,
     align_depth_img[:, :] = depth_img[depthYs, depthXs, :]
     if show:
         cv2.imshow('Aligned Image', cv2.resize(cv2.flip(align_depth_img, 1), (int(1920 / 2.0), int(1080 / 2.0))))
-        cv2.waitKey(0)
+        cv2.waitKey(3000)
     if return_aligned_image:
         return align_depth_img
     return depthXs, depthYs
